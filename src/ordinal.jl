@@ -77,6 +77,48 @@ function bivnorm_cdf(h::Real, k::Real, rho::Real)::Float64
     return half_ub * result
 end
 
+"""
+    _bivnorm_cdf_rho(h_f64, k_f64, rho)
+
+Type-generic version of bivnorm_cdf that preserves the numeric type of `rho`.
+Used internally so that ForwardDiff dual numbers flow through `rho` during
+polychoric profile-likelihood optimization. `h` and `k` must be plain Float64.
+"""
+function _bivnorm_cdf_rho(h::Float64, k::Float64, rho::T) where {T<:Real}
+    # Extract the primal (Float64) value of rho for boundary comparisons.
+    # For plain Float64, this is a no-op. For ForwardDiff duals, this drops
+    # the partial components (which is correct: boundary is a measure-zero event).
+    rho_val = ForwardDiff.value(rho)
+
+    # Boundary cases — return scalar constants promoted to type T so the
+    # caller's type inference remains consistent.
+    (h == -Inf || k == -Inf) && return zero(T)
+    (h ==  Inf && k ==  Inf) && return one(T)
+    h ==  Inf  && return oftype(rho, cdf(_NORM, k))
+    k ==  Inf  && return oftype(rho, cdf(_NORM, h))
+    rho_val ==  1.0 && return oftype(rho, cdf(_NORM, min(h, k)))
+    rho_val == -1.0 && return oftype(rho, max(cdf(_NORM, h) + cdf(_NORM, k) - 1.0, 0.0))
+    # Note: do NOT short-circuit rho==0 here; we need the gradient to flow through.
+
+    rho = clamp(rho, oftype(rho, -1.0 + 1e-10), oftype(rho, 1.0 - 1e-10))
+
+    ub = cdf(_NORM, h)          # Float64, depends only on fixed h
+    ub <= 0.0 && return zero(T)
+
+    sqrt1r2 = sqrt(one(T) - rho^2)
+
+    # half_ub is a plain Float64 scaling factor; multiply at the end
+    half_ub_f = ub / 2.0
+    result = zero(T)
+    @inbounds for i in eachindex(_GL20_NODES)
+        u = half_ub_f * (1.0 + _GL20_NODES[i])
+        u = clamp(u, 1e-15, 1.0 - 1e-15)
+        x = quantile(_NORM, u)          # Float64 node, fixed
+        result += _GL20_WEIGHTS[i] * cdf(_NORM, (k - rho * x) / sqrt1r2)
+    end
+    return oftype(rho, half_ub_f) * result
+end
+
 # ─── Univariate threshold estimation ─────────────────────────────────────────
 
 """
@@ -134,4 +176,50 @@ function fit_thresholds(y::Vector{Int})::OrdinalThresholds
         y_ncat,
         Optim.converged(result),
     )
+end
+
+# ─── Polychoric correlation ───────────────────────────────────────────────────
+
+"""
+    polychoric_cor(y1, y2) → Float64
+
+Estimate the polychoric correlation between two ordinal variables.
+Two-stage: thresholds from univariate probit (stage 1), then profile
+likelihood over ρ = tanh(z) holding thresholds fixed (stage 2).
+"""
+function polychoric_cor(y1::Vector{Int}, y2::Vector{Int})::Float64
+    # Recode to 1..k
+    y1 = y1 .- minimum(y1) .+ 1
+    y2 = y2 .- minimum(y2) .+ 1
+
+    # Stage 1: thresholds from marginals
+    fit1 = fit_thresholds(y1)
+    fit2 = fit_thresholds(y2)
+
+    τ1 = vcat(-Inf, fit1.theta, Inf)
+    τ2 = vcat(-Inf, fit2.theta, Inf)
+
+    n = length(y1)
+
+    # Stage 2: profile likelihood over ρ = tanh(z), z ∈ ℝ
+    # Uses _bivnorm_cdf_rho so ForwardDiff dual numbers flow through rho
+    function neg_profile_ll(z)
+        rho = tanh(z[1])
+        ll = zero(eltype(z))
+        for i in 1:n
+            s, t = y1[i], y2[i]
+            p = _bivnorm_cdf_rho(τ1[s+1], τ2[t+1], rho) -
+                _bivnorm_cdf_rho(τ1[s],   τ2[t+1], rho) -
+                _bivnorm_cdf_rho(τ1[s+1], τ2[t],   rho) +
+                _bivnorm_cdf_rho(τ1[s],   τ2[t],   rho)
+            ll += log(max(p, eltype(z)(1e-300)))
+        end
+        return -ll
+    end
+
+    result = optimize(neg_profile_ll, [0.0], LBFGS(),
+                      Optim.Options(iterations=1000, g_tol=1e-7);
+                      autodiff=:forward)
+
+    return tanh(Optim.minimizer(result)[1])
 end

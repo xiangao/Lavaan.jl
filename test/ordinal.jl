@@ -63,3 +63,31 @@ end
     @test fit.nth == 1
     @test isapprox(fit.theta[1], 0.0; atol=0.1)
 end
+
+@testset "polychoric_cor: recovers known ρ=0.6" begin
+    Random.seed!(123)
+    n = 1000
+    rho_true = 0.6
+    z1 = randn(n)
+    z2 = rho_true .* z1 .+ sqrt(1 - rho_true^2) .* randn(n)
+    cuts = quantile(Normal(), [0.25, 0.5, 0.75])
+    to_ord(z) = [sum(z[i] .>= cuts) + 1 for i in 1:length(z)]
+    y1, y2 = to_ord(z1), to_ord(z2)
+
+    rho_hat = Lavaan.polychoric_cor(y1, y2)
+    @test isapprox(rho_hat, rho_true; atol=0.06)
+end
+
+@testset "polychoric_cor: negative correlation ρ=-0.5" begin
+    Random.seed!(99)
+    n = 800
+    rho_true = -0.5
+    z1 = randn(n)
+    z2 = rho_true .* z1 .+ sqrt(1 - rho_true^2) .* randn(n)
+    cuts = quantile(Normal(), [1/3, 2/3])
+    to_ord(z) = [sum(z[i] .>= cuts) + 1 for i in 1:length(z)]
+    y1, y2 = to_ord(z1), to_ord(z2)
+
+    rho_hat = Lavaan.polychoric_cor(y1, y2)
+    @test isapprox(rho_hat, rho_true; atol=0.08)
+end
