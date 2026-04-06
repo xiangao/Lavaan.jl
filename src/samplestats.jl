@@ -53,6 +53,54 @@ function compute_samplestats(data::LavaanData, opts::LavaanOptions)::SampleStats
         nothing
     end
 
+    # ── Ordinal: compute polychoric R and Gamma ───────────────────────────────
+    Gamma_list = nothing
+    thresholds_out = nothing
+    threshold_ses_out = nothing
+
+    if !isempty(data.ordered)
+        Gamma_list = Vector{Matrix{Float64}}(undef, ngroups)
+        all_th  = Dict{String,Vector{Float64}}()
+        all_se  = Dict{String,Vector{Float64}}()
+
+        for g in 1:ngroups
+            X  = data.X[g]
+            n2, p2 = size(X)
+
+            R_poly, Gamma_diag = compute_polychoric_matrix(
+                X, data.ov_names, data.ordered)
+
+            # Replace S with polychoric correlation matrix
+            S_list[g]        = R_poly
+            chol_R = cholesky(Symmetric(R_poly))
+            S_inv_list[g]    = inv(chol_R)
+            logdet_S_list[g] = 2.0 * sum(log.(diag(chol_R.U)))
+
+            # Full diagonal Gamma matrix (m×m)
+            m = p2 * (p2 + 1) ÷ 2
+            Gamma_list[g] = Diagonal(Gamma_diag) |> Matrix
+
+            # Collect thresholds (for output only; first group)
+            if g == 1
+                for name in data.ordered
+                    col = findfirst(==(name), data.ov_names)
+                    col === nothing && continue
+                    y_col = round.(Int, X[:, col])
+                    fit_th = fit_thresholds(y_col)
+                    all_th[name] = fit_th.theta
+                    # SE via delta method: SE(τ) ≈ 1 / (√n * φ(τ))
+                    props = cumsum([count(==(k), y_col) / n2
+                                    for k in 1:fit_th.y_ncat])[1:end-1]
+                    props = clamp.(props, 1e-6, 1 - 1e-6)
+                    all_se[name] = 1.0 ./ (sqrt(n2) .*
+                                           pdf.(_NORM, quantile.(_NORM, props)))
+                end
+                thresholds_out    = all_th
+                threshold_ses_out = all_se
+            end
+        end
+    end
+
     YLp_list = nothing
     S_W_list = nothing
     S_B_list = nothing
@@ -123,10 +171,10 @@ function compute_samplestats(data::LavaanData, opts::LavaanOptions)::SampleStats
         nobs_list,
         sum(nobs_list),
         p,
-        nothing,      # Gamma (computed lazily for WLS)
-        nothing,      # NACOV
-        nothing,      # thresholds
-        nothing,      # threshold_ses
+        Gamma_list,       # Gamma (polychoric when ordered; else nil)
+        nothing,          # NACOV
+        thresholds_out,   # thresholds
+        threshold_ses_out,# threshold_ses
         fiml_pats,    # FIML patterns (nothing unless estimator=:FIML)
         YLp_list,
         S_W_list,
