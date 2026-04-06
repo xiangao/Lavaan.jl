@@ -29,3 +29,37 @@ end
                        cdf(Normal(), a) * cdf(Normal(), b); atol=1e-8)
     end
 end
+
+@testset "fit_thresholds: 4-category variable" begin
+    # Simulate ordinal data: y=1..4 with P(y=k) = 0.25 each
+    # True thresholds: qnorm([0.25, 0.50, 0.75]) ≈ [-0.674, 0.0, 0.674]
+    Random.seed!(42)
+    n = 2000
+    u = rand(n)
+    y = ones(Int, n)
+    for i in 1:n
+        if u[i] < 0.25; y[i] = 1
+        elseif u[i] < 0.50; y[i] = 2
+        elseif u[i] < 0.75; y[i] = 3
+        else; y[i] = 4
+        end
+    end
+
+    fit = Lavaan.fit_thresholds(y)
+    @test fit.converged
+    @test fit.nth == 3
+    @test fit.y_ncat == 4
+    @test isapprox(fit.theta[1], quantile(Normal(), 0.25); atol=0.05)
+    @test isapprox(fit.theta[2], quantile(Normal(), 0.50); atol=0.05)
+    @test isapprox(fit.theta[3], quantile(Normal(), 0.75); atol=0.05)
+end
+
+@testset "fit_thresholds: binary variable" begin
+    Random.seed!(7)
+    n = 1000
+    y = rand(1:2, n)  # 50/50 binary
+    fit = Lavaan.fit_thresholds(y)
+    @test fit.converged
+    @test fit.nth == 1
+    @test isapprox(fit.theta[1], 0.0; atol=0.1)
+end

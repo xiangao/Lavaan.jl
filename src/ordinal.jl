@@ -4,6 +4,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 using Distributions: Normal, cdf, pdf, quantile
+using Optim
 
 # ─── 20-point Gauss-Legendre nodes on [-1, 1] ────────────────────────────────
 # 10 symmetric pairs (±xᵢ, same weight wᵢ)
@@ -74,4 +75,63 @@ function bivnorm_cdf(h::Real, k::Real, rho::Real)::Float64
         result += _GL20_WEIGHTS[i] * cdf(_NORM, (k - rho * x) / sqrt1r2)
     end
     return half_ub * result
+end
+
+# ─── Univariate threshold estimation ─────────────────────────────────────────
+
+"""
+    OrdinalThresholds
+
+Result of univariate ordinal probit fit.
+"""
+struct OrdinalThresholds
+    theta::Vector{Float64}   # [τ₁, τ₂, ..., τ_{k-1}]
+    nth::Int                 # number of thresholds = k - 1
+    y_ncat::Int              # number of categories k
+    converged::Bool
+end
+
+"""
+    fit_thresholds(y) → OrdinalThresholds
+
+Estimate thresholds for an ordinal variable using ML (probit link).
+y must be an integer vector with values 1..k (recoded internally if needed).
+"""
+function fit_thresholds(y::Vector{Int})::OrdinalThresholds
+    y = y .- minimum(y) .+ 1          # recode to 1..k
+    y_ncat = maximum(y)
+    nth = y_ncat - 1
+    nobs = length(y)
+
+    # Starting values: probit of cumulative proportions
+    cumprops = cumsum([count(==(k), y) / nobs for k in 1:y_ncat])[1:end-1]
+    theta_start = quantile.(_NORM, clamp.(cumprops, 1e-10, 1 - 1e-10))
+
+    # Boundary offsets: prevents log(0) for top/bottom categories
+    o_hi = [y[i] == y_ncat ?  100.0 : 0.0 for i in 1:nobs]
+    o_lo = [y[i] == 1      ? -100.0 : 0.0 for i in 1:nobs]
+
+    # Indicator matrices: Y1[i,j] = (y[i]==j+1), Y2[i,j] = (y[i]==j)
+    Y1 = [(y[i] == j + 1) for i in 1:nobs, j in 1:nth]
+    Y2 = [(y[i] == j)     for i in 1:nobs, j in 1:nth]
+
+    function nll(tau)
+        TH = vcat(0.0, tau, 0.0)
+        z_hi = TH[y .+ 1] .+ o_hi
+        z_lo = TH[y]       .+ o_lo
+        pi_i = cdf.(_NORM, z_hi) .- cdf.(_NORM, z_lo)
+        pi_i = max.(pi_i, 1e-300)
+        return -sum(log.(pi_i)) / nobs
+    end
+
+    result = optimize(nll, theta_start, LBFGS(),
+                      Optim.Options(iterations=10_000, g_tol=1e-8);
+                      autodiff=:forward)
+
+    return OrdinalThresholds(
+        Optim.minimizer(result),
+        nth,
+        y_ncat,
+        Optim.converged(result),
+    )
 end
