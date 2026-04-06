@@ -2,7 +2,7 @@
 
 ## Overview
 
-Julia port of R's lavaan SEM package. Phase 7 complete: ordinal/categorical WLSMV added.
+Julia port of R's lavaan SEM package. Phase 7 complete: 294/294 tests pass (ordinal/categorical WLSMV added).
 
 ## Architecture
 

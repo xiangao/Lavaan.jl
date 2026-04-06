@@ -118,7 +118,7 @@ Uses [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl) for automatic
 
 ## Test suite
 
-152 tests covering: CFA, SEM, syntax parsing, non-convergence safety, fit measures, parameter estimates, FIML, lavTestLRT, modindices, bootstrap SEs, and Satorra-Bentler scaled test.
+294 tests covering: CFA, SEM, syntax parsing, non-convergence safety, fit measures, parameter estimates, FIML, lavTestLRT, modindices, bootstrap SEs, Satorra-Bentler scaled test, and ordinal/polychoric DWLS.
 
 ## References
 
