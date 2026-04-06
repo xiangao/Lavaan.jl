@@ -223,3 +223,101 @@ function polychoric_cor(y1::Vector{Int}, y2::Vector{Int})::Float64
 
     return tanh(Optim.minimizer(result)[1])
 end
+
+# ─── Polychoric correlation matrix + asymptotic Gamma ─────────────────────────
+
+"""
+    vech_pos(p, i, j) → Int
+
+1-based position of element (i,j) with i≥j in vech(A) (column-major lower-triangular).
+"""
+function vech_pos(p::Int, i::Int, j::Int)::Int
+    @assert i >= j
+    offset = (j - 1) * p - (j - 1) * (j - 2) ÷ 2
+    return offset + (i - j + 1)
+end
+
+"""
+    _polychoric_var(y1, y2, rho_hat, n) → Float64
+
+Asymptotic variance of ρ̂ via numerical second derivative of profile NLL.
+Var(ρ̂) ≈ 1 / I_obs(ρ̂) where I_obs = -∂²ℓ/∂ρ² at ρ̂.
+"""
+function _polychoric_var(y1::Vector{Int}, y2::Vector{Int},
+                          rho_hat::Float64, n::Int)::Float64
+    y1 = y1 .- minimum(y1) .+ 1
+    y2 = y2 .- minimum(y2) .+ 1
+
+    fit1 = fit_thresholds(y1)
+    fit2 = fit_thresholds(y2)
+    τ1 = vcat(-Inf, fit1.theta, Inf)
+    τ2 = vcat(-Inf, fit2.theta, Inf)
+
+    function nll_rho(rho)
+        rho_c = clamp(rho, -1.0 + 1e-8, 1.0 - 1e-8)
+        ll = 0.0
+        for i in 1:n
+            s, t = y1[i], y2[i]
+            p = bivnorm_cdf(τ1[s+1], τ2[t+1], rho_c) -
+                bivnorm_cdf(τ1[s],   τ2[t+1], rho_c) -
+                bivnorm_cdf(τ1[s+1], τ2[t],   rho_c) +
+                bivnorm_cdf(τ1[s],   τ2[t],   rho_c)
+            ll += log(max(p, 1e-300))
+        end
+        return -ll
+    end
+
+    # Numerical second derivative at rho_hat
+    ε = 1e-4
+    rho_c = clamp(rho_hat, -1.0 + 2ε, 1.0 - 2ε)
+    d2 = (nll_rho(rho_c - ε) - 2.0 * nll_rho(rho_c) + nll_rho(rho_c + ε)) / ε^2
+    d2 = max(d2, 1e-10)
+    return 1.0 / d2   # Var(ρ̂) = 1/I_obs (NLL is sum not mean)
+end
+
+"""
+    compute_polychoric_matrix(X, ov_names, ordered) → (R, Gamma_diag)
+
+Compute the polychoric correlation matrix for variables in `ordered`
+(Pearson for any continuous-continuous pairs) and the diagonal of the
+asymptotic weight matrix Gamma_poly (in vech order).
+
+Returns:
+- `R`          : p×p correlation matrix
+- `Gamma_diag` : m-vector (m = p(p+1)/2) of diagonal Gamma entries
+"""
+function compute_polychoric_matrix(X::Matrix{Float64},
+                                   ov_names::Vector{String},
+                                   ordered::Vector{String})::Tuple{Matrix{Float64},Vector{Float64}}
+    p = length(ov_names)
+    n = size(X, 1)
+    m = p * (p + 1) ÷ 2
+
+    R = Matrix{Float64}(I, p, p)
+    Gamma_diag = fill(2.0, m)   # default: normal-theory var of sample variance
+
+    ord_set = Set(ordered)
+
+    for j in 1:p
+        for i in (j+1):p
+            k = vech_pos(p, i, j)
+            name_i = ov_names[i]
+            name_j = ov_names[j]
+
+            if name_i in ord_set && name_j in ord_set
+                yi = round.(Int, X[:, i])
+                yj = round.(Int, X[:, j])
+                rho = polychoric_cor(yi, yj)
+                R[i, j] = R[j, i] = rho
+                var_rho = _polychoric_var(yi, yj, rho, n)
+                Gamma_diag[k] = n * var_rho
+            else
+                r = cor(X[:, i], X[:, j])
+                R[i, j] = R[j, i] = r
+                Gamma_diag[k] = (1.0 - r^2)^2
+            end
+        end
+    end
+
+    return R, Gamma_diag
+end

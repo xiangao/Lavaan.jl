@@ -91,3 +91,39 @@ end
     rho_hat = Lavaan.polychoric_cor(y1, y2)
     @test isapprox(rho_hat, rho_true; atol=0.08)
 end
+
+@testset "vech_pos: position mapping" begin
+    # p=3: vech order is (1,1),(2,1),(3,1),(2,2),(3,2),(3,3)
+    @test Lavaan.vech_pos(3, 1, 1) == 1
+    @test Lavaan.vech_pos(3, 2, 1) == 2
+    @test Lavaan.vech_pos(3, 3, 1) == 3
+    @test Lavaan.vech_pos(3, 2, 2) == 4
+    @test Lavaan.vech_pos(3, 3, 2) == 5
+    @test Lavaan.vech_pos(3, 3, 3) == 6
+end
+
+@testset "compute_polychoric_matrix: 3-variable case" begin
+    Random.seed!(55)
+    n = 500
+    # True correlations: ρ₁₂=0.6, ρ₁₃=0.4, ρ₂₃=0.5
+    Σ_true = [1.0 0.6 0.4; 0.6 1.0 0.5; 0.4 0.5 1.0]
+    L = cholesky(Σ_true).L
+    Z = (L * randn(3, n))'  # n×3
+    cuts = quantile(Normal(), [0.33, 0.67])
+    to_ord(z) = [sum(z[i] .>= cuts) + 1 for i in 1:length(z)]
+
+    ov = ["y1","y2","y3"]
+    X = Float64.(hcat(to_ord(Z[:,1]), to_ord(Z[:,2]), to_ord(Z[:,3])))
+
+    R, Gamma_d = Lavaan.compute_polychoric_matrix(X, ov, ov)
+
+    # Diagonal = 1
+    @test all(isapprox.(diag(R), 1.0; atol=1e-10))
+    # Off-diagonal close to true values
+    @test isapprox(R[2,1], 0.6; atol=0.10)
+    @test isapprox(R[3,1], 0.4; atol=0.10)
+    @test isapprox(R[3,2], 0.5; atol=0.10)
+    # Gamma_diag: length = p*(p+1)/2, all positive
+    @test length(Gamma_d) == 6
+    @test all(Gamma_d .> 0)
+end
