@@ -253,24 +253,37 @@ function _polychoric_var(y1::Vector{Int}, y2::Vector{Int},
     τ1 = vcat(-Inf, fit1.theta, Inf)
     τ2 = vcat(-Inf, fit2.theta, Inf)
 
-    function nll_rho(rho)
-        rho_c = clamp(rho, -1.0 + 1e-8, 1.0 - 1e-8)
+    # Build nll function — note: use rho_eval (not rho_c) to avoid Julia closure
+    # variable capture issues (if rho_c is assigned in the outer scope, Julia boxes it
+    # and the inner assignment would be invisible).
+    function nll_rho(rho_in)
+        rho_eval = clamp(rho_in, -1.0 + 1e-8, 1.0 - 1e-8)
         ll = 0.0
         for i in 1:n
             s, t = y1[i], y2[i]
-            p = bivnorm_cdf(τ1[s+1], τ2[t+1], rho_c) -
-                bivnorm_cdf(τ1[s],   τ2[t+1], rho_c) -
-                bivnorm_cdf(τ1[s+1], τ2[t],   rho_c) +
-                bivnorm_cdf(τ1[s],   τ2[t],   rho_c)
+            p = bivnorm_cdf(τ1[s+1], τ2[t+1], rho_eval) -
+                bivnorm_cdf(τ1[s],   τ2[t+1], rho_eval) -
+                bivnorm_cdf(τ1[s+1], τ2[t],   rho_eval) +
+                bivnorm_cdf(τ1[s],   τ2[t],   rho_eval)
             ll += log(max(p, 1e-300))
         end
         return -ll
     end
 
-    # Numerical second derivative at rho_hat
+    # Re-optimize rho using these thresholds to ensure we evaluate the second
+    # derivative at the true minimum (rho_hat from polychoric_cor may have used
+    # slightly different threshold values due to optimization variability).
+    # Use Brent's method (1D, no autodiff needed, no Dual-number issues).
+    res = optimize(z -> nll_rho(tanh(z)),
+                   -6.0, 6.0,
+                   Optim.Brent();
+                   rel_tol=1e-8)
+    rho_local = tanh(Optim.minimizer(res))
+
+    # Numerical second derivative at local optimum
     ε = 1e-4
-    rho_c = clamp(rho_hat, -1.0 + 2ε, 1.0 - 2ε)
-    d2 = (nll_rho(rho_c - ε) - 2.0 * nll_rho(rho_c) + nll_rho(rho_c + ε)) / ε^2
+    rho_at = clamp(rho_local, -1.0 + 2ε, 1.0 - 2ε)
+    d2 = (nll_rho(rho_at - ε) - 2.0 * nll_rho(rho_at) + nll_rho(rho_at + ε)) / ε^2
     d2 = max(d2, 1e-10)
     return 1.0 / d2   # Var(ρ̂) = 1/I_obs (NLL is sum not mean)
 end

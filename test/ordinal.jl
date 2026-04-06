@@ -1,5 +1,5 @@
 # ─── test/ordinal.jl ──────────────────────────────────────────────────────────
-using Test, Lavaan, Distributions, Random
+using Test, Lavaan, Distributions, Random, DataFrames
 
 @testset "bivnorm_cdf: boundary cases" begin
     # Independence: P(Z1≤0, Z2≤0; ρ=0) = Φ(0)² = 0.25
@@ -126,4 +126,87 @@ end
     # Gamma_diag: length = p*(p+1)/2, all positive
     @test length(Gamma_d) == 6
     @test all(Gamma_d .> 0)
+end
+
+@testset "ordinal CFA: end-to-end DWLS fit" begin
+    # True model: 1 factor, 4 indicators, all loadings = 0.7
+    # Residual variance = 1 - 0.7² = 0.51
+    Random.seed!(2024)
+    n = 800
+    lambda_true = 0.7
+    eta = randn(n)
+    eps = randn(n, 4) .* sqrt(1 - lambda_true^2)
+    Y_cont = lambda_true .* eta .+ eps   # n×4
+
+    # Discretize to 4 categories at qnorm([0.25, 0.5, 0.75])
+    cuts = quantile(Normal(), [0.25, 0.5, 0.75])
+    to_ord(z) = [sum(z[i] .>= cuts) + 1 for i in 1:length(z)]
+
+    df = DataFrame(
+        y1 = to_ord(Y_cont[:,1]),
+        y2 = to_ord(Y_cont[:,2]),
+        y3 = to_ord(Y_cont[:,3]),
+        y4 = to_ord(Y_cont[:,4]),
+    )
+
+    model_str = "f =~ y1 + y2 + y3 + y4"
+
+    fit = cfa(model_str, df; ordered=["y1","y2","y3","y4"])
+
+    @test fit.converged
+
+    pe = parameterEstimates(fit)
+
+    # Threshold rows should be present (4 vars × 3 thresholds each = 12)
+    thresh_rows = pe[pe.op .== "|", :]
+    @test nrow(thresh_rows) == 12
+
+    # Loading rows
+    load_rows = pe[pe.op .== "=~", :]
+    @test nrow(load_rows) == 4
+
+    # The free loadings (y2,y3,y4 — y1 fixed to 1.0) should be close to each other
+    # All loadings proportional to 0.7; since auto_fix_first=true, y1 loading = 1.0 (fixed)
+    # Free loadings for y2,y3,y4 should all be ≈ 1.0 (since all true lambdas equal)
+    free_loads = load_rows[load_rows.free .> 0, :est]
+    @test length(free_loads) == 3
+    @test all(isapprox.(free_loads, 1.0; atol=0.25))
+
+    # Fit measures exist
+    fm = fitMeasures(fit)
+    @test haskey(fm, :chisq)
+    @test haskey(fm, :df)
+    @test fm[:df] >= 0.0
+end
+
+@testset "ordinal CFA: threshold output in parameterEstimates" begin
+    Random.seed!(77)
+    n = 600
+    # Simple binary factor model
+    eta = randn(n)
+    y1_cont = 0.6 .* eta .+ sqrt(1 - 0.36) .* randn(n)
+    y2_cont = 0.7 .* eta .+ sqrt(1 - 0.49) .* randn(n)
+
+    # Discretize to 3 categories at qnorm([1/3, 2/3])
+    cuts3 = quantile(Normal(), [1/3, 2/3])
+    to_ord3(z) = [sum(z[i] .>= cuts3) + 1 for i in 1:length(z)]
+
+    df2 = DataFrame(f1 = to_ord3(y1_cont), f2 = to_ord3(y2_cont))
+
+    fit2 = cfa("g =~ f1 + f2", df2; ordered=["f1","f2"])
+
+    pe2 = parameterEstimates(fit2)
+    th = pe2[pe2.op .== "|", :]
+
+    # 2 vars × 2 thresholds = 4 rows
+    @test nrow(th) == 4
+
+    # Threshold estimates should be close to probit(1/3) ≈ -0.431 and probit(2/3) ≈ 0.431
+    th_f1 = th[th.lhs .== "f1", :]
+    @test isapprox(th_f1.est[1], quantile(Normal(), 1/3); atol=0.10)
+    @test isapprox(th_f1.est[2], quantile(Normal(), 2/3); atol=0.10)
+
+    # SEs should be positive and finite
+    @test all(th.se .> 0)
+    @test all(isfinite.(th.se))
 end
