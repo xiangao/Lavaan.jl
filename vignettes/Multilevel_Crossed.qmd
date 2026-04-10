@@ -1,0 +1,111 @@
+---
+title: "Multilevel and Crossed Models in Lavaan.jl"
+engine: jupyter
+jupyter: julia-1.12
+format:
+  html:
+    toc: true
+    code-fold: false
+---
+
+
+```{julia}
+using Lavaan, DataFrames, Random
+
+# Simulate clustered data: 50 schools, 10 students each
+Random.seed!(123)
+n_schools, n_per = 50, 10
+N = n_schools * n_per
+school_id = repeat(1:n_schools, inner=n_per)
+
+u1 = randn(n_schools); u2 = 0.5 .* u1 .+ sqrt(0.75) .* randn(n_schools)
+y1 = zeros(N); y2 = zeros(N)
+for i in 1:N
+    c = school_id[i]
+    w1 = randn(); w2 = -0.3*w1 + sqrt(0.91)*randn()
+    y1[i] = u1[c] + w1;  y2[i] = u2[c] + w2
+end
+ml_df = DataFrame(school=school_id, y1=y1, y2=y2)
+
+ml_model = """
+  level: 1
+    y1 ~~ y1
+    y2 ~~ y2
+    y1 ~~ y2
+  level: 2
+    y1 ~~ y1
+    y2 ~~ y2
+    y1 ~~ y2
+"""
+
+fit_ml = sem(ml_model, ml_df; cluster="school")
+summary(fit_ml)
+```
+
+`Lavaan.jl` provides advanced support for data with nested (multilevel) or non-nested (crossed) dependencies.
+
+## Nested Multilevel SEM
+
+When observations are nested within groups (e.g., students within schools), standard SEM can lead to biased standard errors. `Lavaan.jl` uses the **MUML (Muthen's Maximum Likelihood)** estimator to correctly handle these nested structures.
+
+### Syntax for Multilevel Models
+
+Use the `level: 1` and `level: 2` blocks to define your within- and between-group models separately.
+
+```julia
+model = """
+  # Within-group model (Level 1)
+  level: 1
+    f_w =~ x1 + x2 + x3
+    f_w ~ y_w
+
+  # Between-group model (Level 2)
+  level: 2
+    f_b =~ x1 + x2 + x3
+    f_b ~ y_b
+"""
+
+# Fit with the 'cluster' argument
+fit = sem(model, data; cluster="school_id")
+
+# View results
+summary(fit)
+```
+
+`Lavaan.jl` will automatically compute the pooled within-group and between-group sample moments to estimate the model.
+
+## Crossed Random Effects
+
+For more complex data where observations are nested within multiple, non-nested factors (e.g., students nested in both schools and neighborhoods), `Lavaan.jl` implements a **Global Sparse FIML** estimator.
+
+Unlike standard R `lavaan`, `Lavaan.jl` can natively handle these non-nested dependencies using sparse matrix Cholesky factorization for high performance.
+
+### Syntax for Crossed Models
+
+Specify multiple clustering variables in the `cluster` argument as an array.
+
+```julia
+model = """
+  # Define your model as usual
+  f1 =~ x1 + x2 + x3
+  f2 =~ y1 + y2 + y3
+  f2 ~ f1
+"""
+
+# Fit with multiple crossed clusters
+fit = sem(model, data; cluster=["school", "neighborhood"])
+```
+
+### Performance Considerations
+
+`Lavaan.jl`'s crossed random effects implementation uses **SparseArrays.jl**. This allows it to construct and optimize a global $Np \times Np$ covariance matrix efficiently, even for very large datasets, by taking advantage of the sparse structure of the dependencies.
+
+## When to use which?
+
+| Structure | Example | Method | Argument |
+| :--- | :--- | :--- | :--- |
+| **Nested** | Students in Schools | MUML | `cluster="school"` |
+| **Crossed** | Students in Schools & Neighborhoods | Sparse FIML | `cluster=["school", "nh"]` |
+| **Multiple levels** | Students in Classes in Schools | MUML (extended) | `cluster=["class", "school"]` |
+
+By using the same underlying `ForwardDiff.jl` engine, `Lavaan.jl` provides consistent gradients for all levels of complexity.

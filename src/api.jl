@@ -60,6 +60,10 @@ function lavaan(model_string::String,
                 debug::Bool = false,
                 model_type::Symbol = :sem,
                 nboot::Int = 1000,
+                family::Dict{String,Symbol} = Dict{String,Symbol}(),
+                n_quad_points::Int = 15,
+                sam::Bool = false,
+                sam_method::Symbol = :local,
                 )::LavaanFit
 
     cluster_list = if cluster === nothing
@@ -95,9 +99,27 @@ function lavaan(model_string::String,
         debug           = debug,
         model_type      = model_type,
         nboot           = nboot,
+        family          = family,
+        n_quad_points   = n_quad_points,
+        sam             = sam,
+        sam_method      = sam_method,
     )
 
+    if opts.sam
+        return run_sam_pipeline(model_string, data, opts; group=group)
+    end
+
     return _lavaan_pipeline(model_string, data, opts; group=group)
+end
+
+"""
+    sam(model_string, data; sam_method=:local, kwargs...) → LavaanFit
+
+Structural After Measurement (SAM) approach for robust SEM estimation.
+Rosseel & Loh (2022).
+"""
+function sam(model_string::String, data::DataFrame; sam_method::Symbol=:local, kwargs...)::LavaanFit
+    return lavaan(model_string, data; sam=true, sam_method=sam_method, kwargs...)
 end
 
 """
@@ -163,13 +185,21 @@ function _lavaan_pipeline(model_string::String,
     t1 = time()
     ngroups = group === nothing ? 1 : length(unique(skipmissing(data[!, group])))
     pt = build_partable(parsed_rows, ov_names, lv_names, opts; ngroups=ngroups)
+    _fix_poisson_residuals!(pt, opts.family)
     timing[:partable] = time() - t1
 
     # ── step 05: Prepare data + sample statistics ─────────────────────────────
-    # Auto-switch to DWLS for ordinal data
+    # Auto-switch estimator: ordinal → DWLS; Poisson family → GSEM
     if !isempty(opts.ordered) && opts.estimator == :ML
         opts = LavaanOptions(; [f => getfield(opts, f) for f in fieldnames(LavaanOptions)]...,
                              estimator=:DWLS)
+    end
+    has_poisson = any(v == :poisson for v in values(opts.family))
+    if has_poisson && opts.estimator ∉ (:GSEM,)
+        opts = LavaanOptions(; [f => getfield(opts, f) for f in fieldnames(LavaanOptions)]...,
+                             estimator=:GSEM,
+                             meanstructure=true,
+                             int_ov_free=true)
     end
 
     t1 = time()
@@ -225,6 +255,7 @@ function _lavaan_pipeline(model_string::String,
     t1 = time()
     vcov_theta = compute_vcov(model, stats, opts, lavdata, theta_hat, converged, warnings)
     fill_ses!(pt, theta_hat, vcov_theta)
+    compute_defined_params!(pt, vcov_theta)
     timing[:vcov] = time() - t1
 
     # ── Assemble LavaanFit (before fit measures, to allow fit.baseline) ───────

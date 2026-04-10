@@ -12,6 +12,7 @@ using Optim
 using RecipesBase
 using StatsAPI
 using SparseArrays
+using SpecialFunctions
 
 import StatsAPI: coef, vcov, fitted, residuals
 
@@ -39,11 +40,13 @@ include("fit.jl")
 include("results.jl")
 include("simulate.jl")
 include("efa.jl")
+include("gsem.jl")
+include("sam.jl")
 include("print.jl")
 include("api.jl")
 
 # ─── Public API ───────────────────────────────────────────────────────────────
-export lavaan, cfa, sem, growth
+export lavaan, cfa, sem, growth, sam
 
 # Results extraction
 export parameterEstimates, fitMeasures, standardizedSolution

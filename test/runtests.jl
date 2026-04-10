@@ -728,3 +728,6 @@ end
 end
 
 include("ordinal.jl")
+include("gsem.jl")
+include("sam.jl")
+include("labeled_paths.jl")

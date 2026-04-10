@@ -147,7 +147,7 @@ function fit_baseline_model(model::LavaanModel,
 
     # Minimize independence model objective
     theta0_bl = get_start(pt_bl)
-    baseline_est = opts.estimator in (:DWLS, :WLSMV, :WLS) ? opts.estimator : :ML
+    baseline_est = opts.estimator in (:DWLS, :WLSMV, :WLS, :GSEM) ? opts.estimator : :ML
     obj_bl = theta -> estimator_objective(theta, model_bl, stats, baseline_est)
 
     result_bl = try
@@ -210,8 +210,7 @@ function rmsea_ci(chisq::Float64, df::Int, N::Int; alpha::Float64=0.10)
 
     function ncp_pvalue(ncp, tail)
         # P(χ²(df, ncp) ≥ chisq)
-        d = Distributions.NoncentralChisq(df, max(ncp, 0.0))
-        return 1.0 - Distributions.cdf(d, chisq)
+        return robust_ncp_ccdf(df, max(ncp, 0.0), chisq)
     end
 
     # Lower RMSEA CI: find λ such that P(χ²(df,λ) ≥ chisq) = alpha/2
@@ -232,6 +231,25 @@ function rmsea_ci(chisq::Float64, df::Int, N::Int; alpha::Float64=0.10)
     rmsea_hi = sqrt(max(ncp_hi, 0.0) / (df * N))
 
     return (rmsea_lo, rmsea_hi)
+end
+
+"""
+    robust_ncp_ccdf(df, ncp, x)
+
+P(χ²(df, ncp) ≥ x) with clamping to avoid non-convergence in SpecialFunctions.
+"""
+function robust_ncp_ccdf(df::Int, ncp::Float64, x::Float64)
+    (isnan(x) || isinf(x) || x < 0) && return 0.0
+    ncp_clamped = max(ncp, 0.0)
+    if x > 1e12 || ncp_clamped > 1e12
+        return x < ncp_clamped ? 1.0 : 0.0
+    end
+    try
+        d = Distributions.NoncentralChisq(df, ncp_clamped)
+        return 1.0 - Distributions.cdf(d, x)
+    catch
+        return x < ncp_clamped ? 1.0 : 0.0
+    end
 end
 
 function _bisect_ncp(f, target, chisq, df; maxiter=200, tol=1e-6)
@@ -373,9 +391,8 @@ function compute_fit_measures!(fit::LavaanFit)::Dict{Symbol,Float64}
         # pclose: P(RMSEA ≤ 0.05)
         ncp_close = max(T_ML - fm[:df], 0.0)
         if df_int > 0 && ncp_close >= 0
-            d_nc = Distributions.NoncentralChisq(df_int, ncp_close)
-            threshold = 0.05^2 * fm[:df] * Float64(N) + fm[:df]
-            fm[:rmsea_pvalue] = 1.0 - Distributions.cdf(d_nc, threshold)
+            threshold = 0.05^2 * df_int * Float64(N)
+            fm[:rmsea_pvalue] = robust_ncp_ccdf(df_int, ncp_close, threshold + df_int)
         else
             fm[:rmsea_pvalue] = NaN
         end

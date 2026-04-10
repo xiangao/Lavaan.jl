@@ -493,3 +493,34 @@ function _inject_threshold_rows!(pt::ParTable,
         end
     end
 end
+
+"""
+    _fix_poisson_residuals!(pt, family)
+
+For any variable declared as :poisson in `family`, fix its residual variance
+row (op="~~", lhs==rhs) to 0 and mark as not-free.
+
+This is required because Poisson has no free dispersion parameter — the variance
+equals the mean and is determined by λ, not a separate Θ_jj entry.
+"""
+function _fix_poisson_residuals!(pt::ParTable, family::Dict{String,Symbol})
+    isempty(family) && return
+    for k in eachindex(pt.op)
+        pt.op[k] == "~~" || continue
+        pt.lhs[k] == pt.rhs[k] || continue   # must be a variance (not covariance)
+        varname = pt.lhs[k]
+        get(family, varname, :gaussian) == :poisson || continue
+        # Fix residual variance to 0 (not estimated)
+        pt.ustart[k] = 0.0
+        pt.free[k]   = 0
+        pt.label[k]  = ""
+    end
+    # Re-number free parameters (fill in the gaps)
+    free_ctr = 0
+    for k in eachindex(pt.free)
+        if pt.free[k] > 0
+            free_ctr += 1
+            pt.free[k] = free_ctr
+        end
+    end
+end

@@ -63,6 +63,12 @@ Base.@kwdef struct LavaanOptions
     boot_type::Symbol        = :ordinary # :ordinary :bollen_stine :parametric
     # EFA
     rotation::Symbol         = :geomin
+    # GSEM: per-variable family/link (empty = all :gaussian)
+    family::Dict{String,Symbol}  = Dict{String,Symbol}()
+    n_quad_points::Int           = 15   # GH quadrature points per latent dim
+    # SAM
+    sam::Bool                = false
+    sam_method::Symbol       = :local   # :local or :global
     # Model type (used internally by cfa/sem/growth)
     model_type::Symbol       = :sem     # :sem :cfa :growth
     # Verbosity

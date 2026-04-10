@@ -1,0 +1,94 @@
+---
+title: "Categorical and Ordinal Data"
+engine: jupyter
+jupyter: julia-1.12
+format:
+  html:
+    toc: true
+    code-fold: false
+---
+
+
+In `Lavaan.jl`, variables can be declared as ordinal, enabling estimation using **Diagonally Weighted Least Squares (DWLS)**, which is appropriate for Likert-scale or binary outcomes.
+
+## Declaring Ordinal Variables
+
+To specify that certain variables are ordinal, use the `ordered` argument in `cfa()` or `sem()`.
+
+```{julia}
+using Lavaan, DataFrames, Random, Distributions
+
+# Simulate 4-indicator ordinal CFA (3-category Likert)
+Random.seed!(42)
+n = 300
+eta = randn(n)
+cut = [-0.5, 0.5]   # two thresholds → 3 categories
+
+function to_ordinal(z)
+    z < cut[1] ? 1.0 : z < cut[2] ? 2.0 : 3.0
+end
+
+df_ord = DataFrame(
+    y1 = to_ordinal.(0.8 .* eta .+ sqrt(1 - 0.64) .* randn(n)),
+    y2 = to_ordinal.(0.7 .* eta .+ sqrt(1 - 0.49) .* randn(n)),
+    y3 = to_ordinal.(0.9 .* eta .+ sqrt(1 - 0.81) .* randn(n)),
+    y4 = to_ordinal.(0.6 .* eta .+ sqrt(1 - 0.36) .* randn(n)),
+)
+
+ord_model = """
+  F =~ y1 + y2 + y3 + y4
+"""
+
+# Passing ordered= auto-switches estimator to DWLS
+fit_ord = cfa(ord_model, df_ord; ordered=["y1", "y2", "y3", "y4"])
+summary(fit_ord; fit_measures=true)
+```
+
+When `ordered` is specified, `Lavaan.jl` automatically switches the estimator from Maximum Likelihood (`:ML`) to `:DWLS`.
+
+## Under the Hood: Polychoric Correlations
+
+When dealing with ordinal data, `Lavaan.jl` performs a two-stage estimation process:
+1. **Threshold Estimation**: For each ordinal variable, thresholds are estimated assuming a latent underlying normal distribution.
+2. **Correlation Estimation**: Polychoric correlations (for ordinal-ordinal pairs) or polyserial correlations (for ordinal-continuous pairs) are calculated.
+
+The resulting correlation matrix is then used in the DWLS estimation.
+
+## Interpreting Results
+
+```{julia}
+pe = parameterEstimates(fit_ord)
+println("Thresholds (| operator):")
+display(pe[pe.op .== "|", [:lhs, :op, :rhs, :est, :se]])
+println("\nFactor loadings:")
+display(pe[pe.op .== "=~", [:lhs, :rhs, :est, :se, :z, :pvalue]])
+```
+
+In the results from `parameterEstimates(fit)`, you will see a new operator `|`, which represents the **thresholds** for the ordinal variables.
+
+| lhs | op | rhs | label | est | se | z | pvalue |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| y1 | &#124; | t1 | | -0.523 | 0.045 | -11.622 | 0.000 |
+| y1 | &#124; | t2 | | 0.841 | 0.051 | 16.490 | 0.000 |
+
+A variable with $k$ categories will have $k-1$ thresholds.
+
+## Standard Errors and Scaled Tests
+
+For ordinal models, `Lavaan.jl` provides robust standard errors and scaled test statistics (similar to `lavaan`'s `WLSMV` but focused on `DWLS`).
+
+```julia
+# DWLS is the default for ordered variables; MLM applies to continuous data
+fit = cfa(model, data; ordered=["y1", "y2"])   # estimator=:DWLS auto-selected
+```
+
+## Summary of Estimators
+
+| Estimator | Typical Use Case |
+| :--- | :--- |
+| `:ML` | Continuous, normally distributed data. |
+| `:DWLS` | Ordinal/Categorical data (default when `ordered` is used). |
+| `:ULS` | Unweighted Least Squares (useful for some exploratory work). |
+| `:FIML` | Full Information Maximum Likelihood (for missing data). |
+
+By providing native support for polychoric correlations, `Lavaan.jl` ensures that your SEM models remain valid even when the underlying data is categorical.

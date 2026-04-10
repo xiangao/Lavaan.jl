@@ -40,6 +40,8 @@ fitMeasures(fit, [:cfi, :tli, :rmsea, :srmr])
 - Confirmatory Factor Analysis (CFA): `cfa()`
 - Structural Equation Models (SEM): `sem()`
 - Latent Growth Curve Models: `growth()`
+- Generalized SEM with Poisson/mixed indicators: `lavaan(...; family=Dict("y"=>:poisson))`
+- Structural After Measurement (SAM): `sam()`
 - General lavaan interface: `lavaan()`
 
 ## Model syntax
@@ -53,6 +55,7 @@ Identical to R lavaan:
 | `~`      | regression                  | `y ~ x1 + x2`        |
 | `~1`     | intercept                   | `y ~1`               |
 | `:=`     | defined parameter           | `indirect := a*b`    |
+| `a * x`  | labeled path                | `textual ~ a * visual` |
 
 ## Estimators
 
@@ -66,6 +69,7 @@ Identical to R lavaan:
 | `:WLS`    | Weighted Least Squares |
 | `:DWLS`   | Diagonally Weighted Least Squares (auto-selected for ordinal data) |
 | `:FIML`   | Full Information Maximum Likelihood (missing data) |
+| `:GSEM`   | Generalized SEM (Poisson/mixed, Gauss-Hermite quadrature; auto-selected) |
 
 ## Ordinal / categorical data
 
@@ -101,6 +105,34 @@ fit = cfa(model, data; se=:bootstrap, nboot=1000)
 
 For MLM estimator: also `chisq_scaled`, `pvalue_scaled`, `scaling_factor`
 
+## Mediation and defined parameters
+
+```julia
+model = """
+  textual =~ x4 + x5 + x6
+  speed   =~ x7 + x8 + x9
+  textual ~ a * visual
+  speed   ~ b * textual + c * visual
+  indirect := a * b
+  total    := indirect + c
+"""
+fit = sem(model, HS)
+parameterEstimates(fit)   # includes :=  rows with delta-method SEs
+```
+
+## Generalized SEM (Poisson indicators)
+
+```julia
+model = "eta =~ y1 + y2 + y3"
+fit = lavaan(model, data; family=Dict("y1"=>:poisson, "y2"=>:poisson, "y3"=>:poisson))
+```
+
+## SAM (Structural After Measurement)
+
+```julia
+fit_sam = sam(model, data)            # local SAM (Rosseel & Loh 2022)
+```
+
 ## Diagnostics
 
 ```julia
@@ -116,12 +148,26 @@ modindices(fit; sort=true, minimum_value=3.0)
 
 Uses [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl) for automatic differentiation and [Optim.jl](https://github.com/JuliaNLSolvers/Optim.jl) L-BFGS for optimization. Bootstrap parallelized via `Threads.@threads`.
 
+## Vignettes
+
+HTML vignettes with live Julia output in `vignettes/`:
+
+- **Introduction** — CFA basics, Holzinger-Swineford example
+- **Model_Syntax** — all operators, growth curves, multi-group
+- **Mediation_Analysis** — labeled paths, `:=` defined parameters, latent mediation
+- **Ordinal_Data** — polychoric correlations, DWLS, threshold estimates
+- **Multilevel_Crossed** — two-level SEM, crossed random effects
+- **GSEM** — Poisson indicators, Gauss-Hermite quadrature
+- **SAM** — Structural After Measurement vs standard SEM comparison
+
 ## Test suite
 
-282 tests covering: CFA, SEM, syntax parsing, non-convergence safety, fit measures, parameter estimates, FIML, lavTestLRT, modindices, bootstrap SEs, Satorra-Bentler scaled test, and ordinal/polychoric DWLS.
+326 tests covering: CFA, SEM, syntax parsing, non-convergence safety, fit measures, parameter estimates, FIML, lavTestLRT, modindices, bootstrap SEs, Satorra-Bentler scaled test, ordinal/polychoric DWLS, GSEM (Poisson/mixed), SAM, labeled paths, and `:=` defined parameters with delta-method SEs.
 
 ## References
 
 Rosseel, Y. (2012). lavaan: An R Package for Structural Equation Modeling. *Journal of Statistical Software*, 48(2), 1–36.
 
 Satorra, A. & Bentler, P.M. (1994). Corrections to test statistics and standard errors in covariance structure analysis. In A. von Eye & C.C. Clogg (Eds.), *Latent variables analysis*, pp. 399–419.
+
+Rosseel, Y. & Loh, W.W. (2022). A structural after measurement approach to structural equation modeling. *Psychological Methods*, 27(6), 1067–1093.
