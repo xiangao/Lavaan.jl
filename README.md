@@ -150,15 +150,17 @@ Uses [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl) for automatic
 
 ## Vignettes
 
-HTML vignettes with live Julia output in `vignettes/`:
+Full documentation: **https://xiangao.github.io/Lavaan.jl/dev/**
 
-- **Introduction** — CFA basics, Holzinger-Swineford example
-- **Model_Syntax** — all operators, growth curves, multi-group
-- **Mediation_Analysis** — labeled paths, `:=` defined parameters, latent mediation
-- **Ordinal_Data** — polychoric correlations, DWLS, threshold estimates
-- **Multilevel_Crossed** — two-level SEM, crossed random effects
-- **GSEM** — Poisson indicators, Gauss-Hermite quadrature
-- **SAM** — Structural After Measurement vs standard SEM comparison
+| Vignette | Description |
+|----------|-------------|
+| [Introduction](https://xiangao.github.io/Lavaan.jl/dev/vignettes/Introduction/) | CFA basics, Holzinger-Swineford example |
+| [Model Syntax](https://xiangao.github.io/Lavaan.jl/dev/vignettes/Model_Syntax/) | All operators, growth curves, multi-group |
+| [Mediation Analysis](https://xiangao.github.io/Lavaan.jl/dev/vignettes/Mediation_Analysis/) | Labeled paths, `:=` defined parameters, latent mediation |
+| [Ordinal Data](https://xiangao.github.io/Lavaan.jl/dev/vignettes/Ordinal_Data/) | Polychoric correlations, DWLS, threshold estimates |
+| [Multilevel & Crossed](https://xiangao.github.io/Lavaan.jl/dev/vignettes/Multilevel_Crossed/) | Two-level SEM, crossed random effects |
+| [GSEM](https://xiangao.github.io/Lavaan.jl/dev/vignettes/GSEM/) | Poisson indicators, Gauss-Hermite quadrature |
+| [SAM](https://xiangao.github.io/Lavaan.jl/dev/vignettes/SAM/) | Structural After Measurement vs standard SEM |
 
 ## Test suite
 
