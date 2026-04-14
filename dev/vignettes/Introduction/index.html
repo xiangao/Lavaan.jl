@@ -17,7 +17,7 @@ model = &quot;&quot;&quot;
 fit = cfa(model, HS)
 
 # Summarize the results
-summary(fit, fit_measures=true)</code></pre><p><strong>Output:</strong></p><pre><code class="language-text hljs">────────────────────────────────────────────────────────────────────────
+summary(fit, fit_measures=true)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">────────────────────────────────────────────────────────────────────────
 lavaan 0.1.0-dev -- CFA model
 
   ✓  Model converged normally
@@ -111,4 +111,70 @@ model = &quot;&quot;&quot;
 &quot;&quot;&quot;
 
 fit = sem(model, political_democracy())
-summary(fit)</code></pre><h2 id="Model-Components"><a class="docs-heading-anchor" href="#Model-Components">Model Components</a><a id="Model-Components-1"></a><a class="docs-heading-anchor-permalink" href="#Model-Components" title="Permalink"></a></h2><ul><li><strong>Factor Loadings (<code>=~</code>)</strong>: Defines which observed variables indicate which latent factors.</li><li><strong>Regressions (<code>~</code>)</strong>: Defines directional relationships between variables.</li><li><strong>(Co)variances (<code>~~</code>)</strong>: Defines variances of variables and covariances between them.</li><li><strong>Intercepts (<code>~ 1</code>)</strong>: Explicitly models the mean structure.</li><li><strong>Defined Parameters (<code>:=</code>)</strong>: Create new parameters as functions of existing ones (useful for indirect effects in mediation).</li></ul><h2 id="Next-Steps"><a class="docs-heading-anchor" href="#Next-Steps">Next Steps</a><a id="Next-Steps-1"></a><a class="docs-heading-anchor-permalink" href="#Next-Steps" title="Permalink"></a></h2><p>Explore the more advanced vignettes to learn about:</p><ul><li><a href="../Model_Syntax/">Model Syntax and Operators</a></li><li><a href="../Multilevel_Crossed/">Multilevel and Crossed Models</a></li><li><a href="../Ordinal_Data/">Categorical and Ordinal Data</a></li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../Model_Syntax/">Model Syntax »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 14 April 2026 14:46">Tuesday 14 April 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+summary(fit)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">────────────────────────────────────────────────────────────────────────
+lavaan 0.1.0-dev -- SEM model
+
+  ✓  Model converged normally
+     Number of observations:              75
+     Estimator:                           ML
+     Number of model parameters:          31
+
+Model Test User Model:
+  Test statistic:               38.125
+  Degrees of freedom:           35
+  P-value (Chi-square):         0.329
+
+Parameter Estimates:
+  Standard errors:              standard
+  Information:                  expected
+
+Latent Variable Definitions:
+
+  Observed          Variable     Estimate  Std.Err z-value  P(&gt;|z|)
+  ────────────────────────────────────────────────────────────
+  ind60        =~   x1              1.000   (fixed)
+               =~   x2              2.180    0.139 15.685    0.000
+               =~   x3              1.819    0.152 11.949    0.000
+  dem60        =~   y1              1.000   (fixed)
+               =~   y2              1.257    0.185  6.775    0.000
+               =~   y3              1.058    0.148  7.131    0.000
+               =~   y4              1.265    0.151  8.391    0.000
+  dem65        =~   y5              1.000   (fixed)
+               =~   y6              1.186    0.171  6.920    0.000
+               =~   y7              1.280    0.160  7.978    0.000
+               =~   y8              1.266    0.163  7.756    0.000
+
+Regressions:
+
+  Observed          Variable     Estimate  Std.Err z-value  P(&gt;|z|)
+  ────────────────────────────────────────────────────────────
+  dem60        ~    ind60           1.483    0.397  3.733    0.000
+  dem65        ~    ind60           0.572    0.234  2.449    0.014
+               ~    dem60           0.837    0.099  8.476    0.000
+
+Variances and Covariances:
+
+  Observed          Variable     Estimate  Std.Err z-value  P(&gt;|z|)
+  ────────────────────────────────────────────────────────────
+  y1           ~~   y5              0.632    0.374  1.690    0.091
+  y2           ~~   y4              1.331    0.708  1.879    0.060
+               ~~   y6              2.182    0.736  2.964    0.003
+  y3           ~~   y7              0.806    0.630  1.280    0.201
+  y4           ~~   y8              0.353    0.464  0.761    0.447
+  y6           ~~   y8              1.374    0.580  2.371    0.018
+  x1           ~~   x1              0.083    0.020  4.136    0.000
+  x2           ~~   x2              0.121    0.071  1.712    0.087
+  x3           ~~   x3              0.473    0.090  5.233    0.000
+  y1           ~~   y1              1.917    0.475  4.035    0.000
+  y2           ~~   y2              7.473    1.364  5.479    0.000
+  y3           ~~   y3              5.136    0.981  5.233    0.000
+  y4           ~~   y4              3.190    0.766  4.165    0.000
+  y5           ~~   y5              2.383    0.495  4.810    0.000
+  y6           ~~   y6              5.021    0.908  5.532    0.000
+  y7           ~~   y7              3.478    0.738  4.715    0.000
+  y8           ~~   y8              3.298    0.717  4.603    0.000
+  ind60        ~~   ind60           0.454    0.088  5.170    0.000
+  dem60        ~~   dem60           4.009    0.957  4.188    0.000
+  dem65        ~~   dem65           0.175    0.223  0.783    0.434
+
+────────────────────────────────────────────────────────────────────────</code></pre><h2 id="Model-Components"><a class="docs-heading-anchor" href="#Model-Components">Model Components</a><a id="Model-Components-1"></a><a class="docs-heading-anchor-permalink" href="#Model-Components" title="Permalink"></a></h2><ul><li><strong>Factor Loadings (<code>=~</code>)</strong>: Defines which observed variables indicate which latent factors.</li><li><strong>Regressions (<code>~</code>)</strong>: Defines directional relationships between variables.</li><li><strong>(Co)variances (<code>~~</code>)</strong>: Defines variances of variables and covariances between them.</li><li><strong>Intercepts (<code>~ 1</code>)</strong>: Explicitly models the mean structure.</li><li><strong>Defined Parameters (<code>:=</code>)</strong>: Create new parameters as functions of existing ones (useful for indirect effects in mediation).</li></ul><h2 id="Next-Steps"><a class="docs-heading-anchor" href="#Next-Steps">Next Steps</a><a id="Next-Steps-1"></a><a class="docs-heading-anchor-permalink" href="#Next-Steps" title="Permalink"></a></h2><p>Explore the more advanced vignettes to learn about:</p><ul><li><a href="../Model_Syntax/">Model Syntax and Operators</a></li><li><a href="../Multilevel_Crossed/">Multilevel and Crossed Models</a></li><li><a href="../Ordinal_Data/">Categorical and Ordinal Data</a></li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../Model_Syntax/">Model Syntax »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 14 April 2026 19:53">Tuesday 14 April 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
