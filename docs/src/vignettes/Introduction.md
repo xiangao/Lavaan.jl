@@ -1,5 +1,9 @@
 # Introduction to Lavaan.jl
 
+```@meta
+CurrentModule = Lavaan
+```
+
 `Lavaan.jl` is a Julia port of the R package `lavaan` (Latent Variable Analysis). It allows for the estimation of a wide range of structural equation models, including confirmatory factor analysis (CFA), path analysis, and full structural equation modeling (SEM).
 
 ## Why Lavaan.jl?
@@ -13,7 +17,7 @@
 
 The classic "Holzinger and Swineford" dataset is included in `Lavaan.jl`. This dataset consists of mental ability test scores of seventh- and eighth-grade children from two different schools.
 
-```julia
+```@example lavaan_intro
 using Lavaan, DataFrames
 
 # Load the classic Holzinger and Swineford (1939) dataset
@@ -35,91 +39,11 @@ fit = cfa(model, HS)
 summary(fit, fit_measures=true)
 ```
 
-**Output:**
-
-```text
-────────────────────────────────────────────────────────────────────────
-lavaan 0.1.0-dev -- CFA model
-
-  ✓  Model converged normally
-     Number of observations:             301
-     Estimator:                           ML
-     Number of model parameters:          21
-
-Model Test User Model:
-  Test statistic:               85.306
-  Degrees of freedom:           24
-  P-value (Chi-square):         0.000
-
-Model Test Baseline Model:
-  Test statistic:               918.852
-  Degrees of freedom:           36
-  P-value:                      0.000
-
-User Model versus Baseline Model:
-  Comparative Fit Index (CFI):  0.931
-  Tucker-Lewis Index (TLI):     0.896
-
-Root Mean Square Error of Approximation:
-  RMSEA:                        0.092
-  90% Confidence Interval:      [0.071, 0.114]
-  P-value H₀: RMSEA ≤ 0.050:   0.998
-
-Standardized Root Mean Square Residual:
-  SRMR:                         0.065
-
-Information Criteria:
-  Log-likelihood user model (H0): -2387.752
-  AIC:                          4817.505
-  BIC:                          4895.354
-  BIC2 (Sample-size adjusted):  4828.754
-
-Parameter Estimates:
-  Standard errors:              standard
-  Information:                  expected
-
-Latent Variable Definitions:
-
-  Observed          Variable     Estimate  Std.Err z-value  P(>|z|)
-  ────────────────────────────────────────────────────────────
-  visual       =~   x1              1.000   (fixed)
-               =~   x2              0.554    0.109  5.066    0.000
-               =~   x3              0.729    0.117  6.220    0.000
-  textual      =~   x4              1.000   (fixed)
-               =~   x5              1.113    0.065 17.128    0.000
-               =~   x6              0.926    0.056 16.481    0.000
-  speed        =~   x7              1.000   (fixed)
-               =~   x8              1.180    0.150  7.851    0.000
-               =~   x9              1.082    0.195  5.543    0.000
-
-Variances and Covariances:
-
-  Observed          Variable     Estimate  Std.Err z-value  P(>|z|)
-  ────────────────────────────────────────────────────────────
-  x1           ~~   x1              0.551    0.119  4.612    0.000
-  x2           ~~   x2              1.138    0.105 10.875    0.000
-  x3           ~~   x3              0.847    0.095  8.881    0.000
-  x4           ~~   x4              0.372    0.048  7.739    0.000
-  x5           ~~   x5              0.448    0.058  7.703    0.000
-  x6           ~~   x6              0.357    0.044  8.200    0.000
-  x7           ~~   x7              0.802    0.088  9.130    0.000
-  x8           ~~   x8              0.489    0.092  5.321    0.000
-  x9           ~~   x9              0.568    0.091  6.250    0.000
-  visual       ~~   visual          0.812    0.150  5.404    0.000
-  textual      ~~   textual         0.983    0.113  8.729    0.000
-  speed        ~~   speed           0.385    0.092  4.168    0.000
-  visual       ~~   textual         0.410    0.080  5.124    0.000
-               ~~   speed           0.263    0.056  4.735    0.000
-  textual      ~~   speed           0.174    0.049  3.518    0.000
-
-────────────────────────────────────────────────────────────────────────
-```
-
 ## Structural Equation Modeling (SEM)
 
 For full SEM models involving regressions between latent variables, use the `sem()` function.
 
-```julia
+```@example lavaan_intro
 # Political Democracy model from Bollen (1989)
 model = """
   # latent variable definitions

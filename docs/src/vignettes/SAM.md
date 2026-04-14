@@ -1,5 +1,9 @@
 # Structural After Measurement (SAM) in Lavaan.jl
 
+```@meta
+CurrentModule = Lavaan
+```
+
 **Structural After Measurement (SAM)** is a robust estimation approach for structural equation models (Rosseel & Loh, 2022). Unlike standard SEM, which estimates measurement and structural parameters simultaneously, SAM separates these steps. This prevents measurement model misspecification from biasing the structural path estimates.
 
 ## Why use SAM?
@@ -18,7 +22,7 @@
 
 The following example compares standard SEM with the SAM approach using the Bollen (1989) Industrialization and Democracy dataset.
 
-```julia
+```@example lavaan_sam
 using Lavaan, DataFrames
 
 # Load the dataset
@@ -58,13 +62,6 @@ end
 
 println("SEM Beta (dem60 ~ ind60): ", round(get_path(fit_sem, "dem60", "~", "ind60"), digits=4))
 println("SAM Beta (dem60 ~ ind60): ", round(get_path(fit_sam, "f_dem60", "~", "f_ind60"), digits=4))
-```
-
-**Output:**
-
-```text
-SEM Beta (dem60 ~ ind60): 1.483
-SAM Beta (dem60 ~ ind60): 0.5362
 ```
 
 ## Fitting from Summary Statistics

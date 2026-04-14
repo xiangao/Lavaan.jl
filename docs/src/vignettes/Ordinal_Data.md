@@ -1,12 +1,35 @@
 # Categorical and Ordinal Data
 
+```@meta
+CurrentModule = Lavaan
+```
+
 In `Lavaan.jl`, variables can be declared as ordinal, enabling estimation using **Diagonally Weighted Least Squares (DWLS)**, which is appropriate for Likert-scale or binary outcomes.
 
 ## Declaring Ordinal Variables
 
 To specify that certain variables are ordinal, use the `ordered` argument in `cfa()` or `sem()`.
 
-```julia
+```@example lavaan_ordinal
+using Lavaan, DataFrames, Random, Distributions
+
+Random.seed!(123)
+n = 400
+f = randn(n)
+z1 = 0.9 .* f .+ randn(n)
+z2 = 0.7 .* f .+ randn(n)
+z3 = 0.8 .* f .+ randn(n)
+z4 = 0.6 .* f .+ randn(n)
+
+cuts = [-0.5, 0.4]
+ordinalize(z) = map(x -> x < cuts[1] ? 1 : x < cuts[2] ? 2 : 3, z)
+data = DataFrame(
+    y1 = ordinalize(z1),
+    y2 = ordinalize(z2),
+    y3 = ordinalize(z3),
+    y4 = ordinalize(z4),
+)
+
 # Model with ordinal indicators
 model = """
   f1 =~ y1 + y2 + y3 + y4
@@ -17,23 +40,6 @@ fit = cfa(model, data; ordered=["y1", "y2", "y3", "y4"])
 
 # View results
 parameterEstimates(fit)
-```
-
-**Output:**
-
-```text
-8×6 DataFrame
- Row │ lhs     op      rhs     est          se          z            
-     │ String  String  String  Float64      Float64     Float64      
-─────┼───────────────────────────────────────────────────────────────
-   1 │ F       =~      y1       1.0         NaN         NaN
-   2 │ F       =~      y2       0.627364    108.025       0.00580758
-   3 │ y1      ~~      y1       0.437676     96.8258      0.00452024
-   4 │ y2      ~~      y2       0.778677     38.1094      0.0204327
-   5 │ F       ~~      F        0.562324     96.8258      0.00580758
-   6 │ y1      |       t1      -0.310738      0.117645   -2.64132
-   7 │ y1      |       t2       0.36381       0.119769    3.03759
-   8 │ y2      |       t1      -0.00501328    0.112101   -0.044721
 ```
 
 When `ordered` is specified, `Lavaan.jl` automatically switches the estimator from Maximum Likelihood (`:ML`) to `:DWLS`.

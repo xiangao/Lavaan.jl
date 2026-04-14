@@ -1,5 +1,9 @@
 # Mediation Analysis in Lavaan.jl
 
+```@meta
+CurrentModule = Lavaan
+```
+
 Mediation analysis is a common application of SEM, where the researcher explores the mechanism by which one variable affects another through a third variable (the mediator).
 
 ## The Mediation Model
@@ -97,7 +101,7 @@ By using latent variables, you can account for measurement error, which often bi
 
 ### Example: Latent Mediation with Holzinger-Swineford
 
-```julia
+```@example lavaan_mediation
 using Lavaan, DataFrames
 
 df = holzinger_swineford()
@@ -121,15 +125,4 @@ pe = parameterEstimates(fit)
 
 # Show only the defined parameters
 pe[pe.op .== ":=", [:lhs, :op, :rhs, :est, :se, :z, :pvalue]]
-```
-
-**Output:**
-
-```text
-2×7 DataFrame
- Row │ lhs       op      rhs           est        se         z        pvalue    
-     │ String    String  String        Float64    Float64    Float64  Float64   
-─────┼──────────────────────────────────────────────────────────────────────────
-   1 │ indirect  :=      a * b         0.0268808  0.0265923  1.01085  0.31209
-   2 │ total     :=      indirect + c  0.324008   0.0697292  4.64666  3.3735e-6
 ```

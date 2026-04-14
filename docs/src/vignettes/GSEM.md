@@ -1,5 +1,9 @@
 # Generalized SEM (GSEM) in Lavaan.jl
 
+```@meta
+CurrentModule = Lavaan
+```
+
 Standard SEM assumes that all observed indicators follow a multivariate normal distribution. However, in many research settings, you may have count data, binary outcomes, or other non-Gaussian distributions. 
 
 `Lavaan.jl` supports **Generalized SEM (GSEM)**, allowing you to specify different distributions (families) for different outcome variables within the same model.
@@ -18,8 +22,9 @@ GSEM uses **Gauss-Hermite quadrature** to integrate the conditional likelihood o
 
 In this example, we simulate and fit a CFA model where the indicators are count variables following a Poisson distribution.
 
-```julia
+```@example lavaan_gsem
 using Lavaan, DataFrames, Random
+using Distributions
 
 # Simulate some Poisson data
 Random.seed!(123)
@@ -28,8 +33,10 @@ f = randn(n)  # Latent factor
 y1 = [rand(Poisson(exp(0.0 + 1.0 * f_i))) for f_i in f]
 y2 = [rand(Poisson(exp(0.0 + 0.8 * f_i))) for f_i in f]
 y3 = [rand(Poisson(exp(0.0 + 0.6 * f_i))) for f_i in f]
+x1 = 0.8 .* f .+ randn(n)
+x2 = 0.6 .* f .+ randn(n)
 
-df = DataFrame(y1=y1, y2=y2, y3=y3)
+df = DataFrame(y1=y1, y2=y2, y3=y3, x1=x1, x2=x2)
 
 # Define the model syntax
 model = """
@@ -44,62 +51,11 @@ fit = cfa(model, df; family=Dict("y1" => :poisson, "y2" => :poisson, "y3" => :po
 summary(fit)
 ```
 
-**Output:**
-
-```text
-────────────────────────────────────────────────────────────────────────
-lavaan 0.1.0-dev -- CFA model
-
-  ✓  Model converged normally
-     Number of observations:             500
-     Estimator:                         GSEM
-     Number of model parameters:           6
-
-Model Test User Model:
-  Test statistic:               4462.736
-  Degrees of freedom:           3
-  P-value (Chi-square):         0.000
-
-Parameter Estimates:
-  Standard errors:              standard
-  Information:                  expected
-
-Latent Variable Definitions:
-
-  Observed          Variable     Estimate  Std.Err z-value  P(>|z|)
-  ────────────────────────────────────────────────────────────
-  F            =~   y1              1.000   (fixed)
-               =~   y2              0.830    0.060 13.770    0.000
-               =~   y3              0.577    0.058  9.987    0.000
-
-Variances and Covariances:
-
-  Observed          Variable     Estimate  Std.Err z-value  P(>|z|)
-  ────────────────────────────────────────────────────────────
-  y1           ~~   y1              0.000   (fixed)
-  y2           ~~   y2              0.000   (fixed)
-  y3           ~~   y3              0.000   (fixed)
-  F            ~~   F               1.059    0.115  9.188    0.000
-
-Intercepts:
-
-  Observed          Variable     Estimate  Std.Err z-value  P(>|z|)
-  ────────────────────────────────────────────────────────────
-  y1           ~1   1              -0.028    0.072 -0.393    0.694
-  y2           ~1   1              -0.036    0.066 -0.540    0.589
-  y3           ~1   1              -0.058    0.057 -1.013    0.311
-
-
-Warnings:
-  ⚠ Baseline model did not converge. CFI/TLI are NaN.
-────────────────────────────────────────────────────────────────────────
-```
-
 ## Mixed Outcomes
 
 You can mix Gaussian and Poisson indicators in the same model. Any variable not specified in the `family` dictionary defaults to `:gaussian`.
 
-```julia
+```@example lavaan_gsem
 # Model where x1, x2 are normal and y1 is Poisson
 model = """
   F =~ x1 + x2 + y1
