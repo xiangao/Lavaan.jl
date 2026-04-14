@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Mediation Analysis · Lavaan.jl</title><meta name="title" content="Mediation Analysis · Lavaan.jl"/><meta property="og:title" content="Mediation Analysis · Lavaan.jl"/><meta property="twitter:title" content="Mediation Analysis · Lavaan.jl"/><meta name="description" content="Documentation for Lavaan.jl."/><meta property="og:description" content="Documentation for Lavaan.jl."/><meta property="twitter:description" content="Documentation for Lavaan.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Lavaan.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Vignettes</span><ul><li><a class="tocitem" href="../Introduction/">Introduction</a></li><li><a class="tocitem" href="../Model_Syntax/">Model Syntax</a></li><li class="is-active"><a class="tocitem" href>Mediation Analysis</a><ul class="internal"><li><a class="tocitem" href="#The-Mediation-Model"><span>The Mediation Model</span></a></li><li><a class="tocitem" href="#Standard-Errors-for-Indirect-Effects"><span>Standard Errors for Indirect Effects</span></a></li><li><a class="tocitem" href="#Multiple-Mediators"><span>Multiple Mediators</span></a></li><li><a class="tocitem" href="#Mediation-with-Latent-Variables"><span>Mediation with Latent Variables</span></a></li></ul></li><li><a class="tocitem" href="../Ordinal_Data/">Ordinal Data</a></li><li><a class="tocitem" href="../Multilevel_Crossed/">Multilevel &amp; Crossed</a></li><li><a class="tocitem" href="../GSEM/">GSEM</a></li><li><a class="tocitem" href="../SAM/">SAM</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Vignettes</a></li><li class="is-active"><a href>Mediation Analysis</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Mediation Analysis</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/xiangao/Lavaan.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/xiangao/Lavaan.jl/blob/main/docs/src/vignettes/Mediation_Analysis.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Mediation-Analysis-in-Lavaan.jl"><a class="docs-heading-anchor" href="#Mediation-Analysis-in-Lavaan.jl">Mediation Analysis in Lavaan.jl</a><a id="Mediation-Analysis-in-Lavaan.jl-1"></a><a class="docs-heading-anchor-permalink" href="#Mediation-Analysis-in-Lavaan.jl" title="Permalink"></a></h1><p>Mediation analysis is a common application of SEM, where the researcher explores the mechanism by which one variable affects another through a third variable (the mediator).</p><h2 id="The-Mediation-Model"><a class="docs-heading-anchor" href="#The-Mediation-Model">The Mediation Model</a><a id="The-Mediation-Model-1"></a><a class="docs-heading-anchor-permalink" href="#The-Mediation-Model" title="Permalink"></a></h2><p>In a simple mediation model, we have:</p><ul><li><strong>Independent variable (<span>$X$</span>)</strong></li><li><strong>Mediator variable (<span>$M$</span>)</strong></li><li><strong>Dependent variable (<span>$Y$</span>)</strong></li></ul><p>We want to test the <strong>indirect effect</strong> (<span>$a \cdot b$</span>) and the <strong>direct effect</strong> (<span>$c$</span>).</p><h3 id="Specification-in-Lavaan.jl"><a class="docs-heading-anchor" href="#Specification-in-Lavaan.jl">Specification in Lavaan.jl</a><a id="Specification-in-Lavaan.jl-1"></a><a class="docs-heading-anchor-permalink" href="#Specification-in-Lavaan.jl" title="Permalink"></a></h3><p>Use labels to name the paths and the <code>:=</code> operator to define the indirect and total effects.</p><pre><code class="language-julia hljs">model = &quot;&quot;&quot;
+  # Regressions
+    m ~ a * x
+    y ~ b * m + c * x
+
+  # Defined parameters
+    indirect := a * b
+    direct   := c
+    total    := direct + indirect
+&quot;&quot;&quot;
+
+# Fit the model
+fit = sem(model, data)
+
+# See the results for &#39;indirect&#39;, &#39;direct&#39;, and &#39;total&#39;
+parameterEstimates(fit)</code></pre><h2 id="Standard-Errors-for-Indirect-Effects"><a class="docs-heading-anchor" href="#Standard-Errors-for-Indirect-Effects">Standard Errors for Indirect Effects</a><a id="Standard-Errors-for-Indirect-Effects-1"></a><a class="docs-heading-anchor-permalink" href="#Standard-Errors-for-Indirect-Effects" title="Permalink"></a></h2><p>By default, <code>Lavaan.jl</code> calculates standard errors for defined parameters using the <strong>Delta Method</strong>.</p><h3 id="Bootstrap-Standard-Errors"><a class="docs-heading-anchor" href="#Bootstrap-Standard-Errors">Bootstrap Standard Errors</a><a id="Bootstrap-Standard-Errors-1"></a><a class="docs-heading-anchor-permalink" href="#Bootstrap-Standard-Errors" title="Permalink"></a></h3><p>For mediation analysis, many researchers prefer <strong>nonparametric bootstrap standard errors</strong>, as the product of two coefficients (<span>$a \cdot b$</span>) is often not normally distributed.</p><pre><code class="language-julia hljs"># Use 1000 bootstrap iterations
+fit = sem(model, data; se=:bootstrap, nboot=1000)
+
+# The summary will now report bootstrap SEs and p-values
+summary(fit)</code></pre><p><code>Lavaan.jl</code> parallelizes bootstrap calculations using Julia&#39;s <code>Threads.@threads</code>, making it significantly faster on multi-core systems.</p><h2 id="Multiple-Mediators"><a class="docs-heading-anchor" href="#Multiple-Mediators">Multiple Mediators</a><a id="Multiple-Mediators-1"></a><a class="docs-heading-anchor-permalink" href="#Multiple-Mediators" title="Permalink"></a></h2><p>You can easily extend this to models with multiple mediators, whether they are in parallel or in a serial sequence.</p><pre><code class="language-julia hljs"># Parallel mediators
+model = &quot;&quot;&quot;
+  m1 ~ a1 * x
+  m2 ~ a2 * x
+  y  ~ b1 * m1 + b2 * m2 + c * x
+
+  ind_m1 := a1 * b1
+  ind_m2 := a2 * b2
+  total_indirect := ind_m1 + ind_m2
+&quot;&quot;&quot;
+
+fit = sem(model, data)</code></pre><h2 id="Mediation-with-Latent-Variables"><a class="docs-heading-anchor" href="#Mediation-with-Latent-Variables">Mediation with Latent Variables</a><a id="Mediation-with-Latent-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Mediation-with-Latent-Variables" title="Permalink"></a></h2><p>The real power of <code>Lavaan.jl</code> comes when you use latent variables for your mediators or predictors.</p><pre><code class="language-julia hljs">model = &quot;&quot;&quot;
+  # Measurement model
+    X =~ x1 + x2 + x3
+    M =~ m1 + m2 + m3
+    Y =~ y1 + y2 + y3
+
+  # Structural model
+    M ~ a * X
+    Y ~ b * M + c * X
+
+  # Indirect effect
+    indirect := a * b
+&quot;&quot;&quot;
+
+fit = sem(model, data)</code></pre><p>By using latent variables, you can account for measurement error, which often biases estimates of indirect effects in standard regression-based mediation.</p><h3 id="Example:-Latent-Mediation-with-Holzinger-Swineford"><a class="docs-heading-anchor" href="#Example:-Latent-Mediation-with-Holzinger-Swineford">Example: Latent Mediation with Holzinger-Swineford</a><a id="Example:-Latent-Mediation-with-Holzinger-Swineford-1"></a><a class="docs-heading-anchor-permalink" href="#Example:-Latent-Mediation-with-Holzinger-Swineford" title="Permalink"></a></h3><pre><code class="language-julia hljs">using Lavaan, DataFrames
+
+df = holzinger_swineford()
+model = &quot;&quot;&quot;
+  # Measurement model
+    visual  =~ x1 + x2 + x3
+    textual =~ x4 + x5 + x6
+    speed   =~ x7 + x8 + x9
+
+  # Regressions
+    textual ~ a * visual
+    speed   ~ b * textual + c * visual
+
+  # Indirect and total effect
+    indirect := a * b
+    total    := indirect + c
+&quot;&quot;&quot;
+
+fit = sem(model, df)
+pe = parameterEstimates(fit)
+
+# Show only the defined parameters
+pe[pe.op .== &quot;:=&quot;, [:lhs, :op, :rhs, :est, :se, :z, :pvalue]]</code></pre><p><strong>Output:</strong></p><pre><code class="language-text hljs">2×7 DataFrame
+ Row │ lhs       op      rhs           est        se         z        pvalue    
+     │ String    String  String        Float64    Float64    Float64  Float64   
+─────┼──────────────────────────────────────────────────────────────────────────
+   1 │ indirect  :=      a * b         0.0268808  0.0265923  1.01085  0.31209
+   2 │ total     :=      indirect + c  0.324008   0.0697292  4.64666  3.3735e-6</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Model_Syntax/">« Model Syntax</a><a class="docs-footer-nextpage" href="../Ordinal_Data/">Ordinal Data »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 14 April 2026 14:46">Tuesday 14 April 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
