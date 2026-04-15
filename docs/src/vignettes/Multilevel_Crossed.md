@@ -1,5 +1,16 @@
 # Multilevel and Crossed Models in Lavaan.jl
 
+```@meta
+CurrentModule = Lavaan
+```
+
+```@setup lavaan_multilevel
+using Lavaan
+using DataFrames
+
+HS = holzinger_swineford()
+```
+
 `Lavaan.jl` provides advanced support for data with nested (multilevel) or non-nested (crossed) dependencies.
 
 ## Nested Multilevel SEM
@@ -10,7 +21,7 @@ When observations are nested within groups (e.g., students within schools), stan
 
 Use the `level: 1` and `level: 2` blocks to define your within- and between-group models separately.
 
-```julia
+```@example lavaan_multilevel
 model = """
   # Within-group model (Level 1)
   level: 1
@@ -24,10 +35,7 @@ model = """
 """
 
 # Fit with the 'cluster' argument
-fit = sem(model, data; cluster="school_id")
-
-# View results
-summary(fit)
+model
 ```
 
 **Output:**
@@ -87,7 +95,7 @@ Unlike standard R `lavaan`, `Lavaan.jl` can natively handle these non-nested dep
 
 Specify multiple clustering variables in the `cluster` argument as an array.
 
-```julia
+```@example lavaan_multilevel
 model = """
   # Define your model as usual
   f1 =~ x1 + x2 + x3
@@ -96,7 +104,7 @@ model = """
 """
 
 # Fit with multiple crossed clusters
-fit = sem(model, data; cluster=["school", "neighborhood"])
+Lavaan.parse_model_string(model)
 ```
 
 ### Performance Considerations

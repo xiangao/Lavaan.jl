@@ -67,9 +67,10 @@ A variable with $k$ categories will have $k-1$ thresholds.
 
 For ordinal models, `Lavaan.jl` provides robust standard errors and scaled test statistics (similar to `lavaan`'s `WLSMV` but focused on `DWLS`).
 
-```julia
+```@example lavaan_ordinal
 # Using the Satorra-Bentler scaled test
-fit = cfa(model, data; ordered=["y1", "y2"], estimator=:MLM)
+fit = cfa(model, data; ordered=["y1", "y2", "y3", "y4"], estimator=:MLM)
+fitMeasures(fit, [:chisq, :cfi, :rmsea, :srmr])
 ```
 
 ## Summary of Estimators

@@ -62,6 +62,7 @@ model = """
 """
 
 fit = cfa(model, df; family=Dict("y1" => :poisson))
+parameterEstimates(fit)[1:5, [:lhs, :op, :rhs, :est, :se]]
 ```
 
 ## Implementation Details
@@ -74,6 +75,7 @@ fit = cfa(model, df; family=Dict("y1" => :poisson))
 
 Gauss-Hermite quadrature scale exponentially with the number of latent factors ($Q^q$). For models with 3 or more latent factors, consider reducing `n_quad_points` (e.g., to 7 or 9) if optimization is slow.
 
-```julia
-fit = sem(model, data; n_quad_points=7, family=my_families)
+```@example lavaan_gsem
+fit_small_quad = cfa(model, df; family=Dict("y1" => :poisson), n_quad_points=7)
+fitMeasures(fit_small_quad, [:chisq, :cfi, :rmsea])
 ```

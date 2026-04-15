@@ -68,11 +68,25 @@ println("SAM Beta (dem60 ~ ind60): ", round(get_path(fit_sam, "f_dem60", "~", "f
 
 Because the structural step of SAM relies only on latent covariances, `Lavaan.jl` also supports fitting models directly from a covariance matrix and sample size. This is used internally by SAM but can be called manually via `lavaan()`.
 
-```julia
-# Fit a model using only a covariance matrix
-fit = lavaan(model_syntax, nothing; 
-             sample_cov = my_cov_matrix, 
-             sample_nobs = 500)
+```@example lavaan_sam
+model_syntax = """
+  ind60 =~ x1 + x2 + x3
+  dem60 =~ y1 + y2 + y3 + y4
+  dem65 =~ y5 + y6 + y7 + y8
+  dem60 ~ ind60
+  dem65 ~ ind60 + dem60
+"""
+
+sample_cov = Matrix(Statistics.cov(Matrix(df)))
+fit = lavaan(
+    model_syntax,
+    nothing;
+    sample_cov = sample_cov,
+    sample_nobs = nrow(df),
+    var_names = names(df),
+)
+
+fitMeasures(fit, [:chisq, :cfi, :rmsea])
 ```
 
 ## Implementation Notes

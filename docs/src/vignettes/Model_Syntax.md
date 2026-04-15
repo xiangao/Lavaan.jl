@@ -1,5 +1,16 @@
 # Model Syntax and Operators
 
+```@meta
+CurrentModule = Lavaan
+```
+
+```@setup lavaan_syntax
+using Lavaan
+using DataFrames
+
+HS = holzinger_swineford()
+```
+
 `Lavaan.jl` uses a domain-specific language (DSL) that is identical to R's `lavaan`. This allows for highly flexible model specification in a clear and human-readable format.
 
 ## The Core Operators
@@ -23,18 +34,20 @@ You can label parameters by prefixing them with a label and `*`. This is useful 
 
 Label two parameters with the same name to constrain them to be equal:
 
-```julia
+```@example lavaan_syntax
 model = """
   # Constrain factor loadings of x2 and x3 to be the same
   f =~ x1 + L1*x2 + L1*x3
 """
+
+Lavaan.parse_model_string(model)
 ```
 
 ### 2. Parameter Definitions (`:=`)
 
 Use labeling to compute new parameters, such as indirect effects in a mediation model:
 
-```julia
+```@example lavaan_syntax
 # Simple mediation: x -> m -> y
 model = """
   y ~ b*m + c*x
@@ -46,13 +59,15 @@ model = """
   # Total effect (indirect + direct)
   total := indirect + c
 """
+
+Lavaan.parse_model_string(model)
 ```
 
 ## Residual Variances and Covariances
 
 By default, `Lavaan.jl` automatically adds residual variances for all endogenous variables. You can explicitly specify them or their covariances using the `~~` operator.
 
-```julia
+```@example lavaan_syntax
 model = """
   visual =~ x1 + x2 + x3
   
@@ -62,13 +77,15 @@ model = """
   # Fix a variance to a specific value
   x3 ~~ 0.5*x3
 """
+
+Lavaan.parse_model_string(model)
 ```
 
 ## Latent Growth Curves (`growth()`)
 
 Growth curve models are a special case of SEM where factor loadings are fixed to represent time.
 
-```julia
+```@example lavaan_syntax
 # Linear growth model
 model = """
   # Intercept (i) and slope (s) factors
@@ -76,16 +93,23 @@ model = """
   s =~ 0*t1 + 1*t2 + 2*t3 + 3*t4
 """
 
-fit = growth(model, data)
+model
 ```
 
 ## Multiple Groups
 
 You can specify a grouping variable to perform multi-group SEM:
 
-```julia
+```@example lavaan_syntax
 # Fit the model across different schools
+model = """
+  visual  =~ x1 + x2 + x3
+  textual =~ x4 + x5 + x6
+  speed   =~ x7 + x8 + x9
+"""
+
 fit = cfa(model, HS; group="school")
+parameterEstimates(fit)[1:6, [:lhs, :op, :rhs, :est, :se]]
 ```
 
 This will automatically allow parameters to vary across groups unless otherwise constrained.
