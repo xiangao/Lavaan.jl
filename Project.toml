@@ -1,6 +1,6 @@
 name = "Lavaan"
 uuid = "ce2a13a7-56b1-4859-b5a1-430ba1139435"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Xiang Ao"]
 
 [deps]
