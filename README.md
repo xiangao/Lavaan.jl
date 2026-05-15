@@ -173,3 +173,8 @@ Rosseel, Y. (2012). lavaan: An R Package for Structural Equation Modeling. *Jour
 Satorra, A. & Bentler, P.M. (1994). Corrections to test statistics and standard errors in covariance structure analysis. In A. von Eye & C.C. Clogg (Eds.), *Latent variables analysis*, pp. 399–419.
 
 Rosseel, Y. & Loh, W.W. (2022). A structural after measurement approach to structural equation modeling. *Psychological Methods*, 27(6), 1067–1093.
+
+
+## Development note
+
+This package was developed with assistance from Claude Code (Anthropic). All generated code has been reviewed, tested, and is understood by the maintainer.
