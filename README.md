@@ -1,8 +1,10 @@
 # Lavaan.jl
 
-Julia port of the R [lavaan](https://lavaan.ugent.be) package for Structural Equation Modeling (SEM).
-
-Uses the same model syntax as R lavaan for easy migration.
+`Lavaan.jl` is a Julia port of the R
+[lavaan](https://lavaan.ugent.be) syntax for structural equation models. The
+goal is not to replace the R package. The goal is to make the same model
+strings usable from Julia, with Julia-side estimation and automatic
+differentiation.
 
 ## Installation
 
