@@ -1,6 +1,6 @@
 # Multilevel and Crossed Models in Lavaan.jl
 
-`Lavaan.jl` provides advanced support for data with nested (multilevel) or non-nested (crossed) dependencies.
+This page shows how `Lavaan.jl` handles nested and crossed dependence.
 
 ## Nested Multilevel SEM
 
@@ -101,7 +101,8 @@ fit = sem(model, data; cluster=["school", "neighborhood"])
 
 ### Performance Considerations
 
-`Lavaan.jl`'s crossed random effects implementation uses **SparseArrays.jl**. This allows it to construct and optimize a global $Np \times Np$ covariance matrix efficiently, even for very large datasets, by taking advantage of the sparse structure of the dependencies.
+The crossed random effects code uses `SparseArrays.jl` to represent the global
+$Np \times Np$ covariance matrix without storing all entries densely.
 
 ## When to use which?
 
@@ -111,4 +112,4 @@ fit = sem(model, data; cluster=["school", "neighborhood"])
 | **Crossed** | Students in Schools & Neighborhoods | Sparse FIML | `cluster=["school", "nh"]` |
 | **Multiple levels** | Students in Classes in Schools | MUML (extended) | `cluster=["class", "school"]` |
 
-By using the same underlying `ForwardDiff.jl` engine, `Lavaan.jl` provides consistent gradients for all levels of complexity.
+The same `ForwardDiff.jl` machinery is used for these likelihoods.

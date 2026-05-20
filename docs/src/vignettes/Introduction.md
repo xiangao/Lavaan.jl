@@ -9,8 +9,8 @@ CurrentModule = Lavaan
 ## Why Lavaan.jl?
 
 - **R-Compatible Syntax**: Use the same model strings you are familiar with from R's `lavaan`.
-- **Julia Performance**: Benefit from Julia's speed and advanced optimization libraries like `Optim.jl`.
-- **Automatic Differentiation**: High-precision gradients via `ForwardDiff.jl` ensure robust and fast convergence.
+- **Julia estimation**: Fit the model with Julia optimizers such as `Optim.jl`.
+- **Automatic differentiation**: Use `ForwardDiff.jl` for gradients.
 - **Advanced Features**: Native support for multilevel and crossed random effects.
 
 ## A First Example: Confirmatory Factor Analysis (CFA)
@@ -77,7 +77,7 @@ summary(fit)
 
 ## Next Steps
 
-Explore the more advanced vignettes to learn about:
+Other vignettes cover:
 - [Model Syntax and Operators](Model_Syntax.md)
 - [Multilevel and Crossed Models](Multilevel_Crossed.md)
 - [Categorical and Ordinal Data](Ordinal_Data.md)

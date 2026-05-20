@@ -4,7 +4,9 @@
 CurrentModule = Lavaan
 ```
 
-**Structural After Measurement (SAM)** is a robust estimation approach for structural equation models (Rosseel & Loh, 2022). Unlike standard SEM, which estimates measurement and structural parameters simultaneously, SAM separates these steps. This prevents measurement model misspecification from biasing the structural path estimates.
+Structural After Measurement (SAM) estimates the measurement model first and
+then the structural part. This is useful when one wants to reduce the effect of
+measurement-model misspecification on the structural paths.
 
 ## Why use SAM?
 
@@ -23,7 +25,7 @@ CurrentModule = Lavaan
 The following example compares standard SEM with the SAM approach using the Bollen (1989) Industrialization and Democracy dataset.
 
 ```@example lavaan_sam
-using Lavaan, DataFrames
+using Lavaan, DataFrames, Statistics
 
 # Load the dataset
 df = political_democracy()
@@ -66,27 +68,13 @@ println("SAM Beta (dem60 ~ ind60): ", round(get_path(fit_sam, "f_dem60", "~", "f
 
 ## Fitting from Summary Statistics
 
-Because the structural step of SAM relies only on latent covariances, `Lavaan.jl` also supports fitting models directly from a covariance matrix and sample size. This is used internally by SAM but can be called manually via `lavaan()`.
+Because the structural step of SAM relies only on latent covariances, the
+summary-statistics API is the natural extension point. The internal SAM code
+uses this idea, but the public summary-statistics API is not exposed yet.
 
-```@example lavaan_sam
-model_syntax = """
-  ind60 =~ x1 + x2 + x3
-  dem60 =~ y1 + y2 + y3 + y4
-  dem65 =~ y5 + y6 + y7 + y8
-  dem60 ~ ind60
-  dem65 ~ ind60 + dem60
-"""
-
-sample_cov = Matrix(Statistics.cov(Matrix(df)))
-fit = lavaan(
-    model_syntax,
-    nothing;
-    sample_cov = sample_cov,
-    sample_nobs = nrow(df),
-    var_names = names(df),
-)
-
-fitMeasures(fit, [:chisq, :cfi, :rmsea])
+```julia
+# Illustrative only. The public summary-statistics API is not exposed yet.
+# fit = lavaan(model_syntax, nothing; sample_cov=my_cov_matrix, sample_nobs=500)
 ```
 
 ## Implementation Notes

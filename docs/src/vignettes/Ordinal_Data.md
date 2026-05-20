@@ -65,7 +65,8 @@ A variable with $k$ categories will have $k-1$ thresholds.
 
 ## Standard Errors and Scaled Tests
 
-For ordinal models, `Lavaan.jl` provides robust standard errors and scaled test statistics (similar to `lavaan`'s `WLSMV` but focused on `DWLS`).
+For ordinal models, `Lavaan.jl` reports sandwich standard errors and scaled test
+statistics for the DWLS fit.
 
 ```@example lavaan_ordinal
 # Using the Satorra-Bentler scaled test

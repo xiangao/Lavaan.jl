@@ -11,7 +11,8 @@ using DataFrames
 HS = holzinger_swineford()
 ```
 
-`Lavaan.jl` uses a domain-specific language (DSL) that is identical to R's `lavaan`. This allows for highly flexible model specification in a clear and human-readable format.
+`Lavaan.jl` uses the same basic model syntax as R's `lavaan`. The main
+operators are the ones below.
 
 ## The Core Operators
 

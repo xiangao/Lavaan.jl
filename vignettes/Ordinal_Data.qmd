@@ -9,7 +9,9 @@ format:
 ---
 
 
-In `Lavaan.jl`, variables can be declared as ordinal, enabling estimation using **Diagonally Weighted Least Squares (DWLS)**, which is appropriate for Likert-scale or binary outcomes.
+In `Lavaan.jl`, variables can be declared as ordinal. The estimator then uses
+diagonally weighted least squares (DWLS), which is the usual starting point for
+Likert-scale or binary indicators.
 
 ## Declaring Ordinal Variables
 
@@ -75,7 +77,8 @@ A variable with $k$ categories will have $k-1$ thresholds.
 
 ## Standard Errors and Scaled Tests
 
-For ordinal models, `Lavaan.jl` provides robust standard errors and scaled test statistics (similar to `lavaan`'s `WLSMV` but focused on `DWLS`).
+For ordinal models, `Lavaan.jl` reports sandwich standard errors and scaled test
+statistics for the DWLS fit.
 
 ```julia
 # DWLS is the default for ordered variables; MLM applies to continuous data
@@ -91,4 +94,5 @@ fit = cfa(model, data; ordered=["y1", "y2"])   # estimator=:DWLS auto-selected
 | `:ULS` | Unweighted Least Squares (useful for some exploratory work). |
 | `:FIML` | Full Information Maximum Likelihood (for missing data). |
 
-By providing native support for polychoric correlations, `Lavaan.jl` ensures that your SEM models remain valid even when the underlying data is categorical.
+The point is to avoid treating ordinal indicators as continuous when that is not
+the model one wants to estimate.

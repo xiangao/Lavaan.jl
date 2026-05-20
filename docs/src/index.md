@@ -1,17 +1,17 @@
 # Lavaan.jl
 
-`Lavaan.jl` is a Julia port of the R [lavaan](https://lavaan.ugent.be) package for Structural Equation Modeling (SEM). It uses the same model syntax as R lavaan for easy migration.
+`Lavaan.jl` is a Julia port of the R
+[lavaan](https://lavaan.ugent.be) model syntax. The goal is to write the same
+SEM model strings from Julia and estimate them with Julia tools.
 
-## Features
+## What is included
 
-- **R-Compatible Syntax**: Same model strings as R's `lavaan` — no relearning required.
-- **Full Estimator Suite**: ML, FIML, GLS, WLS, DWLS, MLR, MLM, GSEM.
-- **Ordinal/Categorical Data**: Polychoric correlations + DWLS, auto-selected.
-- **Generalized SEM**: Poisson/mixed indicators via Gauss-Hermite quadrature.
-- **SAM**: Structural After Measurement (Rosseel & Loh 2022).
-- **Multilevel & Crossed**: Two-level SEM and arbitrary non-nested clustering.
-- **Automatic Differentiation**: ForwardDiff.jl for robust convergence.
-- **Bootstrap SEs**: Parallel nonparametric bootstrap via `Threads.@threads`.
+- CFA, SEM, growth models, and the general `lavaan()` interface.
+- ML, FIML, GLS, WLS, DWLS, MLR, MLM, and GSEM.
+- Ordinal indicators through polychoric correlations and DWLS.
+- Structural After Measurement (Rosseel and Loh 2022).
+- Multilevel and crossed-cluster examples.
+- Bootstrap standard errors.
 
 ## Installation
 

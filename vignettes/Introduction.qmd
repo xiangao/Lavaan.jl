@@ -9,14 +9,15 @@ format:
 ---
 
 
-`Lavaan.jl` is a Julia port of the R package `lavaan` (Latent Variable Analysis). It allows for the estimation of a wide range of structural equation models, including confirmatory factor analysis (CFA), path analysis, and full structural equation modeling (SEM).
+`Lavaan.jl` is a Julia port of the R package `lavaan` syntax. It currently
+covers confirmatory factor analysis, path analysis, and structural equation
+models.
 
-## Why Lavaan.jl?
+## Why use it?
 
-- **R-Compatible Syntax**: Use the same model strings you are familiar with from R's `lavaan`.
-- **Julia Performance**: Benefit from Julia's speed and advanced optimization libraries like `Optim.jl`.
-- **Automatic Differentiation**: High-precision gradients via `ForwardDiff.jl` ensure robust and fast convergence.
-- **Advanced Features**: Native support for multilevel and crossed random effects.
+- Use lavaan-style model strings from Julia.
+- Fit with Julia optimizers and automatic differentiation.
+- Work with examples for ordinal, multilevel, crossed, GSEM, and SAM models.
 
 ## A First Example: Confirmatory Factor Analysis (CFA)
 
